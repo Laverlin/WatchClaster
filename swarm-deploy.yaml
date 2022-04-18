@@ -68,8 +68,17 @@ services:
       - nginx-net
     depends_on:
       - zookeeper
-
     deploy:
       mode: global
       restart_policy:
         condition: on-failure
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    ports:
+      - "8880:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=swamp-kafka
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
