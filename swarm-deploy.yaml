@@ -36,14 +36,13 @@ services:
 #      - sh.acme.autoload.domain=${DOMAIN_NAME}
 
   zookeeper:
-    platform: linux/x86_64
     image: bitnami/zookeeper
     ports:
 #      - '2181:2181'
       - target: 2181
-      - published: 2181
-      - protocol: tcp
-      - mode: host
+        published: 2181
+        protocol: tcp
+        mode: host
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
