@@ -1,0 +1,76 @@
+version: '3.9'
+
+networks:
+  nginx-net:
+    name: nginx-net
+    driver: overlay
+    
+
+services:
+
+  ## nginx
+  ##
+  nginx:
+#    container_name: nginx
+    image: nginx:alpine
+    ports: 
+      - 8090:80
+      - 8443:443
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+#    volumes:
+#      - ./nginx/config:/etc/nginx/conf.d
+#      - ./nginx/ssl:/etc/nginx/ssl      
+#      - ./nginx/log:/var/log/nginx
+#      - ./nginx/wwwroot:/var/www/html
+#    environment:
+#      NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/conf.d
+#      DOMAIN_NAME: ${DOMAIN_NAME}
+#      WS_HOST_NAME: watch-server
+    networks:
+      - nginx-net
+#    restart: on-failure
+#    labels:
+#      - sh.acme.autoload.domain=${DOMAIN_NAME}
+
+  zookeeper:
+    platform: linux/x86_64
+    image: bitnami/zookeeper
+    ports:
+#      - '2181:2181'
+      - target: 2181
+      - published: 2181
+      - protocol: tcp
+      - mode: host
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - nginx-net
+
+
+  kafka:
+    image: 'bitnami/kafka:latest'
+    ports:
+      - target: 9093
+        published: 9093
+        protocol: tcp
+        mode: host
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=INTERNAL://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+    networks:
+      - nginx-net
+    depends_on:
+      - zookeeper
+
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
